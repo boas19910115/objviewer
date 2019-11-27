@@ -1,0 +1,64 @@
+{
+  "name": "react-three-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "cannon": "^0.6.2",
+    "react": "^16.8.6",
+    "react-color": "^2.17.3",
+    "react-dom": "^16.8.6",
+    "react-scripts": "3.2.0",
+    "react-three-fiber": "^3.0.2",
+    "sass-loader": "^8.0.0",
+    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-react": "^0.88.1",
+    "three": "^0.109.0"
+  },
+  "config": {
+    "port": 5000
+  },
+  "scripts": {
+    "start": "PORT=$npm_package_config_port react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "./node_modules/.bin/eslint \"./src/**/*.js\" \"./src/**/*.jsx\" ",
+    "lint:fix": "yarn lint --fix",
+    "deploy": "yarn lint:fix && yarn build && firebase deploy"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "precommit": {},
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "babel-eslint": "10.0.3",
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-config-standard-jsx": "^8.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.14.3",
+    "eslint-plugin-standard": "^4.0.0",
+    "eslint-watch": "^6.0.0",
+    "jsdoc": "^3.6.3",
+    "node-sass": "^4.13.0",
+    "pre-commit": "^1.2.2",
+    "prettier": "^1.18.2"
+  }
+}
