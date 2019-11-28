@@ -24,7 +24,7 @@
     "eject": "react-scripts eject",
     "lint": "./node_modules/.bin/eslint \"./src/**/*.js\" \"./src/**/*.jsx\" ",
     "lint:fix": "yarn lint --fix",
-    "deploy": "yarn lint:fix && yarn build && firebase deploy"
+    "deploy": "yarn lint:fix && yarn build && firebase deploy --only hosting"
   },
   "eslintConfig": {
     "extends": "react-app"
