@@ -28,7 +28,6 @@ const urls = [
 
 const textureCube = new THREE.CubeTextureLoader().load(urls)
 textureCube.format = THREE.RGBFormat
-console.log(textureCube)
 
 var rR = 'textures/cube/Park3Med/'
 var urlsR = [

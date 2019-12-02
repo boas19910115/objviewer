@@ -51,8 +51,6 @@ function createLinesTexture(color = 0x00e1ca) {
   texture.needsUpdate = true
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearMipmapLinearFilter
-  console.log(texture)
-
   return texture
 }
 
@@ -80,8 +78,6 @@ function createColorTexture(color = 0x0) {
   texture.needsUpdate = true
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearMipmapLinearFilter
-  console.log(texture)
-
   return texture
 }
 

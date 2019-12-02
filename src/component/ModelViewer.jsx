@@ -16,11 +16,14 @@ import StyleMap, {
   // reset as skinReset,
 } from './modelViewStyle'
 import { SketchPicker } from 'react-color'
+import { adjustableAmbientLight } from './helper'
 import * as EnvMaps from './modelScene'
 
 import {
   MeshPhysicalMaterialController,
   currentMeshStore,
+  sphereSample,
+  heartsSample,
 } from './useMeshPhysicalMaterial'
 
 extend({ OrbitControls })
@@ -237,14 +240,12 @@ function LoadedObjModel({
       cubeCamera: cubeCameraRef.current,
     })
   }
-  const obj = useRef()
-  useEffect(() => {}, [obj, obj.current])
 
   return (
     loadedGroup && (
       <>
         <cubeCamera ref={cubeCameraRef} />
-        <primitive ref={obj} object={loadedGroup} />
+        <primitive object={loadedGroup} />
       </>
     )
   )
@@ -336,7 +337,7 @@ function Plane({ color, envMap, position: [, , z], size: [width, height] }) {
     geo.scale(4, 4, 4)
     geo.translate(0, 0, z)
     return geo
-  }, [width])
+  }, [width, z])
 
   const shadowMesh = useMemo(() => {
     const shadowMaterial = new THREE.ShadowMaterial({ opacity: 0.5 })
@@ -680,17 +681,17 @@ export default function ModelViewer() {
           {/* <BackgroundSphere /> */}
           <MainPointLight
             distance={1000}
-            intensity={0.8}
+            intensity={0.7}
             color={0xffffff}
             castShadow
             position={[700, 2700, 250].map(v => 1.2 * v)}
           />
           <pointLight
-            intensity={0.8}
+            intensity={0.7}
             color={0xffffff}
             position={lightPosition.map(v => -v)}
           />
-          <ambientLight intensity={0.3} color={0xffffff} />
+          <primitive object={adjustableAmbientLight} />
           <LoadedObjModel
             isEnvMap={isEnvMap}
             isSkin={isSkin}
@@ -701,6 +702,8 @@ export default function ModelViewer() {
             envMap={envMap}
             // textureFilename={textureFilename}
           />
+          <primitive object={sphereSample} />
+          <primitive object={heartsSample} />
           {isBackground && (
             <Plane
               envMap={envMap}
