@@ -40,57 +40,73 @@ function createLinesTexture(color = 0x00e1ca) {
     }
   }
 
-  const texture = new THREE.DataTexture(
-    data,
-    width,
-    height,
-    THREE.RGBFormat,
-    // THREE.UnsignedByteType,
-    // THREE.UVMapping,
-  )
+  const texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat)
   texture.needsUpdate = true
-  texture.minFilter = THREE.LinearMipmapLinearFilter
+  texture.minFilter = THREE.LinearFilter
   texture.magFilter = THREE.LinearMipmapLinearFilter
   return texture
 }
 
 function createColorTexture(color = 0x0) {
-  const width = 2000
-  const height = 2000
+  const width = 512
+  const height = 512
   const threeColor = new THREE.Color(color)
   const size = width * height
+  const dim = 4
 
   // used the buffer to create a DataTexture
-  const data = new Uint8Array(3 * size)
+  const data = new Uint8ClampedArray(dim * size)
   const r = Math.floor(threeColor.r * 255)
   const g = Math.floor(threeColor.g * 255)
   const b = Math.floor(threeColor.b * 255)
-  const colorArray = [r, g, b]
-  const dim = 3
+  const a = 0
+  const colorArray = [r, g, b, a]
+
   for (let i = 0; i < size; i++) {
-    const point = i * 3
+    const point = i * dim
     for (let j = 0; j < dim; j++) {
       data[point + j] = colorArray[j]
     }
   }
-
   const texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat)
   texture.needsUpdate = true
-  texture.minFilter = THREE.LinearMipmapLinearFilter
+  texture.minFilter = THREE.LinearFilter
   texture.magFilter = THREE.LinearMipmapLinearFilter
   return texture
 }
 
 const lineTextureMap = createLinesTexture()
-const linearCubeTextrueMap = new THREE.CubeTexture(
-  Array(6).fill(lineTextureMap.image),
-)
 
-linearCubeTextrueMap.format = THREE.RGBFormat
+/**
+ * @param {ImageData} imageData
+ */
+const generateImg = color => {
+  const canvas = document.createElement('canvas')
+  canvas.width = 512
+  canvas.height = 512
+  const ctx = canvas.getContext('2d')
+  const colorHexString = new THREE.Color(color).getHexString()
+  ctx.fillStyle = `#${colorHexString}`
+  ctx.fillRect(0, 0, 512, 512)
+  const img = new Image()
+  img.src = canvas.toDataURL('image/jpeg')
+  return img
+}
+
+const createCubeColorTextureMap = color => {
+  const linearCubeColorTextureMap = new THREE.CubeTexture(
+    Array(6)
+      .fill(null)
+      .map(() => generateImg(color)),
+    THREE.CubeReflectionMapping,
+  )
+  linearCubeColorTextureMap.format = THREE.RGBFormat
+  return linearCubeColorTextureMap
+}
 
 export {
   lineTextureMap,
   createLinesTexture,
   createColorTexture,
-  linearCubeTextrueMap,
+  createCubeColorTextureMap,
 }

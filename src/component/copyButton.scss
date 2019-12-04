@@ -1,0 +1,54 @@
+div.copy-button-wrap {
+  width: fit-content;
+  position: relative;
+  padding: 0 !important;
+  div.ui.input.copy-button {
+    ::selection {
+      color: unset;
+      background: transparent; /* WebKit/Blink Browsers */
+    }
+    ::-moz-selection {
+      color: unset;
+      background: transparent; /* Gecko Browsers */
+    }
+    padding: 0 !important;
+    text-align: center;
+    > i {
+      right: 50% !important;
+      transform: translateX(50%);
+    }
+    > input {
+      border-style: solid;
+      border-radius: 24px;
+      border-width: 4px;
+      text-align: center !important;
+      margin: 0;
+      padding: 0px 0px !important;
+      &:hover {
+        cursor: pointer;
+        background-color: black;
+        color: #ffffff;
+        border-color: wheat;
+      }
+    }
+  }
+
+  div.ui.label.CopiedNotify {
+    position: absolute;
+    right: 0;
+    top: 0%;
+    transform: translate(110%, -40%) rotateZ(-20deg);
+    transform-origin: bottom left;
+    z-index: 10;
+    &.show-notify {
+      transition: opacity 500ms, visibility 0ms;
+      opacity: 1;
+      visibility: visible;
+    }
+    &.hide-notify {
+      transition: opacity 500ms, visibility 500ms;
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+}

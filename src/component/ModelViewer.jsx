@@ -16,7 +16,7 @@ import StyleMap, {
   // reset as skinReset,
 } from './modelViewStyle'
 import { SketchPicker } from 'react-color'
-import { adjustableAmbientLight } from './helper'
+import { adjustableAmbientLight, senceStore } from './helper'
 import * as EnvMaps from './modelScene'
 
 import {
@@ -152,12 +152,13 @@ const defaultSetting = (group, { isEnvMap, skinType, envMap }) => {
     child.addEventListener('mousedown', ev => {})
     child.material.needsUpdate = true
     child.castShadow = true
+    const scene = senceStore.getSenceInst()
     switch (skinType) {
       case skinTypeMap.BLUE_WITH_LIGHT_EFFECT_IN_MESH:
       case skinTypeMap.BLUE_WITH_LIGHT_EFFECT: {
         child.material.envMap = isEnvMap
           ? EnvMaps[`textureCubeRefraction${envMap}`]
-          : null
+          : scene.background
         break
       }
       case skinTypeMap.BLUE_WITH_PURPLE_EFFECT: {
@@ -166,7 +167,7 @@ const defaultSetting = (group, { isEnvMap, skinType, envMap }) => {
       default: {
         child.material.envMap = isEnvMap
           ? EnvMaps[`textureCube${envMap}`]
-          : null
+          : scene.background
         break
       }
     }
@@ -209,7 +210,11 @@ function LoadedObjModel({
   }, [ObjFilename])
 
   useEffect(() => {
-    loadTextureAsync(textureFilename).then(setTexture)
+    loadTextureAsync(textureFilename)
+      .then(setTexture)
+      .catch(error => {
+        console.log(error)
+      })
   }, [textureFilename])
 
   useEffect(() => {
@@ -262,7 +267,9 @@ function Controls(props) {
        */
       const { parent: scene } = cameraDom
       if (scene) {
+        senceStore.store(scene)
         scene.background = props.background
+        // scene.background = new THREE.Color(0xff0000)
       }
     }
   }, [props.background])

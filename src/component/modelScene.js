@@ -54,6 +54,7 @@ const [
     .setPath(`${r}${dir}/`)
     .load(directions.map(n => `${n}.jpg`))
   textureCubeRefraction.mapping = THREE.CubeRefractionMapping
+
   return [textureCube, textureCubeRefraction]
 })
 

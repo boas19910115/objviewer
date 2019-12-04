@@ -3,7 +3,6 @@ import {
   lineTextureMap,
   createLinesTexture,
   createColorTexture,
-  linearCubeTextrueMap,
 } from './customeTexture'
 
 const typeMap = {
@@ -78,7 +77,6 @@ const styleMap = {
       specular: 0xffffff,
       shininess: 100,
       map: lineTextureMap,
-      envMap: linearCubeTextrueMap,
       // flatShading: THREE.FlatShading,
     })
   },

@@ -4,7 +4,7 @@ import { Radio } from 'semantic-ui-react'
 import { ParametricGeometries } from 'three/examples//jsm/geometries/ParametricGeometries'
 import { Curves } from 'three/examples//jsm/curves/CurveExtras'
 import './useMeshPhysicalMaterial.scss'
-import { ColorSelector, adjustableAmbientLight } from './helper'
+import { ColorSelector, adjustableAmbientLight, senceStore } from './helper'
 
 const matInit = {
   PHYSIC_MAT(mat) {
@@ -49,6 +49,7 @@ const matLib = {
 export const currentMeshStore = {
   PHYSIC_MAT: new THREE.MeshPhysicalMaterial(),
   PHONG_MAT: new THREE.MeshPhongMaterial(),
+  active: false,
   originalMaterial: null,
   /**
    * @type {THREE.Mesh}
@@ -59,10 +60,11 @@ export const currentMeshStore = {
    * @param {object} child
    * @param {THREE.Mesh} child.material
    */
-  storeCurrentMesh: child => {
-    currentMeshStore.childAddress = child
-    currentMeshStore.originalMaterial = child.material.clone(true)
-    currentMeshStore.envMap = child.material.envMap
+  storeCurrentMesh(child) {
+    this.childAddress = child
+    this.originalMaterial = child.material.clone(true)
+    this.envMap = child.material.envMap
+    this.active = false
   },
 }
 
@@ -125,11 +127,18 @@ tubeSample.scale.set(10, 10, 10)
 
 const meshList = [heartsSample, sphereSample, heartsSample]
 
-function switchMaterial(name) {
-  activate(name)
+function switchMaterial(currentType) {
+  sync(currentType)
 }
 
 function activate(currentType) {
+  if (!currentMeshStore.active) {
+    sync(currentType)
+    currentMeshStore.active = true
+  }
+}
+
+function sync(currentType) {
   const list = [currentMeshStore.childAddress, ...meshList]
   const correctPropKeys = Object.keys(currentMeshStore.originalMaterial).filter(
     key => matProps[currentType].includes(key),
@@ -165,14 +174,48 @@ const actionTypes = {
   },
 }
 
+const propertyTypeLabelMap = {
+  [actionTypes.change.REFLECTION]: 'Refection',
+}
+
+const propertyTypeMultiplyBase = {
+  [actionTypes.change.COLOR]: null,
+  [actionTypes.change.ROUGHTNESS]: v => v * 0.01,
+  [actionTypes.change.METALNESS]: v => v * 0.01,
+  [actionTypes.change.REFLECTIVITY]: v => v * 0.01,
+  [actionTypes.change.FLATSHADIN]: v => Boolean(v),
+  [actionTypes.change.CLEARCOAT]: v => v * 0.01,
+  [actionTypes.change.WIREFRAME]: v => Boolean(v),
+  [actionTypes.change.SHININESS]: v => v,
+  [actionTypes.change.REFLECTION]: v => Boolean(v),
+}
+
 const syncChange = (callback, ...targets) => targets.forEach(callback)
 
 const useMeshPhysicalMaterial = () => {
+  const initValue = useMemo(() => {
+    return Object.keys(propertyTypeMultiplyBase).reduce(
+      (preObj, cur) => {
+        return {
+          ...preObj,
+          properties: {
+            ...preObj.properties,
+            [cur]: currentMeshStore[matTypes.PHYSIC][cur],
+          },
+        }
+      },
+      {
+        currentType: matTypes.PHYSIC,
+        properties: {},
+      },
+    )
+  }, [])
   return useReducer(
     /**
      * @param {THREE.MeshPhysicalMaterial} meshPhysicalMaterial
      */
     (state, action) => {
+      const { properties } = state
       const { payload } = action
       const chageValue = payload ? payload[action.type] : null
       const {
@@ -181,27 +224,11 @@ const useMeshPhysicalMaterial = () => {
       switch (action.type) {
         case actionTypes.change.COLOR: {
           material.color = new THREE.Color(chageValue)
-          return { ...state, changeColor: chageValue }
-        }
-        case actionTypes.change.SHININESS: {
-          material.shininess = chageValue
-          break
-        }
-        case actionTypes.change.ROUGHTNESS: {
-          material.roughness = chageValue * 0.01
-          break
-        }
-        case actionTypes.change.METALNESS: {
-          material.metalness = chageValue * 0.01
-          break
-        }
-        case actionTypes.change.REFLECTIVITY: {
-          material.reflectivity = chageValue * 0.01
-          break
-        }
-        case actionTypes.change.CLEARCOAT: {
-          material.clearcoat = chageValue * 0.01
-          break
+          return {
+            ...state,
+            changeColor: chageValue,
+            properties: { [action.type]: { chageValue } },
+          }
         }
         case actionTypes.change.REFLECTION: {
           const { currentType } = state
@@ -220,7 +247,10 @@ const useMeshPhysicalMaterial = () => {
             currentMeshStore.childAddress,
             ...meshList,
           )
-          break
+          return {
+            ...state,
+            properties: { ...properties, [action.type]: !!chageValue },
+          }
         }
         case actionTypes.change.FLATSHADIN: {
           const { currentType } = state
@@ -239,11 +269,17 @@ const useMeshPhysicalMaterial = () => {
             currentMeshStore.childAddress,
             ...meshList,
           )
-          break
+          return {
+            ...state,
+            properties: { ...properties, [action.type]: !!chageValue },
+          }
         }
         case actionTypes.change.WIREFRAME: {
           material.wireframe = !!chageValue
-          break
+          return {
+            ...state,
+            properties: { ...properties, [action.type]: !!chageValue },
+          }
         }
         case actionTypes.ACTIVATE: {
           const { currentType } = state
@@ -260,13 +296,17 @@ const useMeshPhysicalMaterial = () => {
           return { ...state, currentType: nextType }
         }
         default: {
-          return { ...state }
+          material[action.type] = chageValue
+          break
         }
       }
-      return { ...state }
+      return {
+        ...state,
+        properties: { ...properties, [action.type]: chageValue },
+      }
     },
     {
-      currentType: matTypes.PHYSIC,
+      ...initValue,
     },
   )
 }
@@ -288,7 +328,7 @@ export const MeshPhysicalMaterialController = () => {
   )
 
   const [
-    { currentType, changeColor },
+    { currentType, changeColor, properties },
     changeMeshPhysicalMaterial,
   ] = useMeshPhysicalMaterial()
 
@@ -331,74 +371,83 @@ export const MeshPhysicalMaterialController = () => {
 
   const controllerMap = useMemo(
     () => ({
-      [actionTypes.change.SHININESS]: () => (
+      [actionTypes.change.SHININESS]: ({ handleBase, type, currentValue }) => (
         <input
           type='range'
-          defaultValue={currentMat[actionTypes.change.SHININESS]}
+          value={currentValue}
+          step={handleBase(1)}
           min={0}
-          max={100}
+          max={handleBase(100)}
           disabled={currentType === matTypes.PHYSIC}
-          onChange={handleOnChange(actionTypes.change.SHININESS)}
+          onChange={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.ROUGHTNESS]: () => (
+      [actionTypes.change.ROUGHTNESS]: ({ handleBase, type, currentValue }) => (
         <input
           type='range'
-          defaultValue={currentMat[actionTypes.change.ROUGHTNESS]}
+          value={currentValue}
+          step={handleBase(1)}
           min={0}
-          max={100}
+          max={handleBase(100)}
           disabled={currentType === matTypes.PHONG}
-          onChange={handleOnChange(actionTypes.change.ROUGHTNESS)}
+          onChange={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.METALNESS]: () => (
+      [actionTypes.change.METALNESS]: ({ handleBase, type, currentValue }) => (
         <input
           type='range'
-          defaultValue={currentMat[actionTypes.change.METALNESS]}
+          value={currentValue}
+          step={handleBase(1)}
           min={0}
-          max={100}
+          max={handleBase(100)}
           disabled={currentType === matTypes.PHONG}
-          onChange={handleOnChange(actionTypes.change.METALNESS)}
+          onChange={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.REFLECTIVITY]: () => (
+      [actionTypes.change.REFLECTIVITY]: ({
+        handleBase,
+        type,
+        currentValue,
+      }) => (
         <input
           type='range'
-          defaultValue={currentMat[actionTypes.change.REFLECTIVITY]}
+          value={currentValue}
+          step={handleBase(1)}
           min={0}
-          max={100}
-          onChange={handleOnChange(actionTypes.change.REFLECTIVITY)}
+          max={handleBase(100)}
+          onChange={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.CLEARCOAT]: () => (
+      [actionTypes.change.CLEARCOAT]: ({ handleBase, type, currentValue }) => (
         <input
           type='range'
-          defaultValue={currentMat[actionTypes.change.CLEARCOAT]}
+          value={currentValue}
+          step={handleBase(1)}
           min={0}
-          max={100}
+          max={handleBase(100)}
           disabled={currentType === matTypes.PHONG}
-          onChange={handleOnChange(actionTypes.change.CLEARCOAT)}
+          onChange={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.FLATSHADIN]: () => (
+      [actionTypes.change.FLATSHADIN]: ({ handleBase, type, currentValue }) => (
         <Radio
           slider
           defaultChecked={currentMat[actionTypes.change.FLATSHADIN]}
-          onClick={handleOnChange(actionTypes.change.FLATSHADIN)}
+          onClick={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.WIREFRAME]: () => (
+      [actionTypes.change.WIREFRAME]: ({ handleBase, type, currentValue }) => (
         <Radio
           slider
           defaultChecked={currentMat[actionTypes.change.WIREFRAME]}
-          onClick={handleOnChange(actionTypes.change.WIREFRAME)}
+          onClick={handleOnChange(type)}
         />
       ),
-      [actionTypes.change.REFLECTION]: () => (
+      [actionTypes.change.REFLECTION]: ({ handleBase, type, currentValue }) => (
         <Radio
           slider
           defaultChecked={!!currentMat[actionTypes.change.REFLECTION]}
-          onClick={handleOnChange(actionTypes.change.REFLECTION)}
+          onClick={handleOnChange(type)}
         />
       ),
     }),
@@ -407,21 +456,30 @@ export const MeshPhysicalMaterialController = () => {
 
   return (
     <div className={`MeshPhysicalMaterialController ${openController}`}>
-      <h1 className='m-title'>{currentType} Controller</h1>
-      <span>SWITCHER</span>
+      <h1 className='m-title'>
+        {`${
+          {
+            [matTypes.PHYSIC]: 'MeshPhysicalMaterial',
+            [matTypes.PHONG]: 'MeshPhongMaterial',
+          }[currentType]
+        } Customizer`}
+      </h1>
+      <span>MAT-SWITCH</span>
       <button className='mesh-switcher' onClick={handleSwitchButtonOnClick}>
         {currentType}
       </button>
-      <span>RE-ACTIVE</span>
-      <button className='mesh-switcher' onClick={handleActivateButtonOnClick}>
-        ACTIVATE
+      <button
+        className={`mesh-switcher${currentMeshStore.active ? ' active' : ''}`}
+        onClick={handleActivateButtonOnClick}
+      >
+        SYNC
       </button>
       <div className='color-picker-part'>
         <div className={actionTypes.change.COLOR}>
-          {actionTypes.change.COLOR}
+          Objects Color
           <ColorSelector
             color={changeColor}
-            onChange={handleOnChange(actionTypes.change.COLOR)}
+            onChangeCallback={handleOnChange(actionTypes.change.COLOR)}
           />
         </div>
         <div className={actionTypes.change.COLOR}>
@@ -431,18 +489,28 @@ export const MeshPhysicalMaterialController = () => {
             onAlphaChange={alpha => (adjustableAmbientLight.intensity = alpha)}
           />
         </div>
+        <div className={actionTypes.change.COLOR}>
+          Background Color
+          <ColorSelector
+            onChangeCallback={({ hex }) => senceStore.changeColor(hex)}
+          />
+        </div>
       </div>
       <table>
         <tbody>
           {Object.keys(controllerMap).map(key => {
-            const TdContent = controllerMap[key]
             return (
-              <tr key={key}>
-                <th>{key}</th>
-                <td>
-                  <TdContent />
-                </td>
-              </tr>
+              <PropsRow
+                key={key}
+                propType={key}
+                {...{
+                  controllerMap,
+                  properties,
+                  currentMat,
+                  handleOnChange,
+                  currentType,
+                }}
+              />
             )
           })}
         </tbody>
@@ -456,5 +524,85 @@ export const MeshPhysicalMaterialController = () => {
         {isControllerOpen ? 'CLOSE' : 'OPEN Material Controller'}
       </button>
     </div>
+  )
+}
+
+const PropsRow = ({
+  propType,
+  controllerMap,
+  properties,
+  currentMat,
+  handleOnChange,
+  currentType,
+}) => {
+  const TdContent = controllerMap[propType]
+  const handleBase = propertyTypeMultiplyBase[propType]
+  const currentValue = useMemo(() => {
+    if (typeof properties[propType] === 'boolean') {
+      return properties[propType]
+    } else if (typeof currentMat[propType] === 'boolean') {
+      return currentMat[propType]
+    } else {
+      return currentMat[propType] || properties[propType] || 0
+    }
+  }, [properties, propType, currentMat])
+
+  const currentProps = useMemo(() => {
+    switch (propType) {
+      case actionTypes.change.WIREFRAME:
+      case actionTypes.change.FLATSHADIN:
+      case actionTypes.change.REFLECTION: {
+        return {
+          type: 'text',
+          disabled: true,
+          value: { true: 'ON', false: 'OFF' }[!!currentValue],
+          onChange: handleOnChange(propType),
+        }
+      }
+
+      default: {
+        return {
+          type: 'number',
+          min: 0,
+          disabled: !matProps[currentType].includes(propType),
+          value: currentValue,
+          step: handleBase(1),
+          max: handleBase(100),
+          onChange: handleOnChange(propType),
+        }
+      }
+    }
+  }, [propType, handleBase, currentValue, handleOnChange, currentType])
+  const Element = useCallback(
+    props => {
+      switch (propType) {
+        case actionTypes.change.WIREFRAME:
+        case actionTypes.change.FLATSHADIN:
+        case actionTypes.change.REFLECTION: {
+          const { value, className } = props
+          return <div className={className}>{value}</div>
+        }
+
+        default: {
+          return <input {...props} />
+        }
+      }
+    },
+    [propType],
+  )
+  return (
+    <tr>
+      <th>{propertyTypeLabelMap[propType] || propType}</th>
+      <td>
+        <TdContent
+          handleBase={handleBase}
+          type={propType}
+          currentValue={currentValue}
+        />
+      </td>
+      <td>
+        <Element className='input-values' {...currentProps} />
+      </td>
+    </tr>
   )
 }
