@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import * as ReactColor from 'react-color'
 import CopyButton from './copyButton'
@@ -34,13 +34,13 @@ const ColorSelector = ({
   ...props
 }) => {
   /**
-   * @type {[THREE.Color]}
+   * @type {[THREE.HSL]}
    */
   const [color, setColor] = useState(null)
   const handleOnColorSelectorChange = useCallback(
     event => {
-      const { hex, rgb } = event
-      setColor(hex)
+      const { hex, rgb, hsl } = event
+      setColor(hsl)
       if (targetThreeObject) {
         targetThreeObject.color.set(new THREE.Color(hex))
       }
@@ -56,15 +56,21 @@ const ColorSelector = ({
 
   useEffect(() => {
     if (targetThreeObject) {
-      setColor(`#${new THREE.Color(targetThreeObject.color).getHexString()}`)
+      setColor(new THREE.Color(targetThreeObject.color).getHSL())
     }
   }, [targetThreeObject])
+
+  const threeColor = useMemo(
+    () => (color ? new THREE.Color().setHSL(color.h, color.s, color.l) : null),
+    [color],
+  )
 
   return (
     <div>
       <CopyButton
         disabled={!color}
-        text={color ? color.toUpperCase() : 'unset'}
+        text={color ? threeColor.getHexString().toUpperCase() : 'unset'}
+        className='color-text'
       />
       <ColorSelectorType
         color={color || '#000000'}

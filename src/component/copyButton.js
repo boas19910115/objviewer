@@ -26,7 +26,7 @@ const CopiedNotify = ({ notify }) => {
   )
 }
 
-const CopyButton = ({ text, loading, ...otherProps }) => {
+const CopyButton = ({ text, loading, className, ...otherProps }) => {
   const [notify, setNotify] = useState(false)
 
   const ref = useRef()
@@ -47,7 +47,7 @@ const CopyButton = ({ text, loading, ...otherProps }) => {
   return (
     <div className='copy-button-wrap'>
       <Input
-        className='copy-button'
+        className={`copy-button${className ? ` ${className}` : ''}`}
         ref={ref}
         onClick={handleButtonOnClick}
         value={text || ''}

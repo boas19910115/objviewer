@@ -543,7 +543,7 @@ const PropsRow = ({
     } else if (typeof currentMat[propType] === 'boolean') {
       return currentMat[propType]
     } else {
-      return currentMat[propType] || properties[propType] || 0
+      return properties[propType] || currentMat[propType] || 0
     }
   }, [properties, propType, currentMat])
 

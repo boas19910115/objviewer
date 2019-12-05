@@ -57,6 +57,66 @@ div.MeshPhysicalMaterialController {
     td {
       padding: 5px;
       text-align: center;
+      input[type="range"] {
+        -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+        width: 100%; /* Specific width is required for Firefox. */
+        background: transparent; /* Otherwise white in Chrome */
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+        }
+        &:focus {
+          outline: none; /* Removes the blue border. You should probably do some kind of focus styling for accessibility reasons though. */
+        }
+        &::-ms-track {
+          width: 100%;
+          cursor: pointer;
+
+          /* Hides the slider so custom styles can be added */
+          background: transparent;
+          border-color: transparent;
+          color: transparent;
+        }
+
+        @mixin thumb {
+          -webkit-appearance: none;
+          border: 1px solid #000000;
+          height: 1em;
+          width: 16px;
+          border-radius: 3px;
+          background: #7ef1bc;
+          cursor: pointer;
+          margin-top: -14px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+          box-shadow: 1px 1px 1px #00a3c0, 0px 0px 1px #0d0d0d; /* Add cool effects to your sliders! */
+        }
+
+        @mixin track {
+          width: 100%;
+          height: 8.4px;
+          cursor: pointer;
+          box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+          background: #34bfff;
+          border-radius: 1.3px;
+          border: 0.2px solid #010101;
+        }
+
+        &::-webkit-slider-thumb {
+          @include thumb;
+        }
+        &::-webkit-slider-runnable-track {
+          @include track;
+        }
+        &:disabled {
+          &::-webkit-slider-thumb {
+            background: #7e7e7e;
+            cursor: not-allowed;
+            box-shadow: 1px 1px 1px #9c9c9c, 0px 0px 1px #a3a3a3;
+          }
+          &::-webkit-slider-runnable-track {
+            background: #8a8a8a;
+            cursor: not-allowed;
+          }
+        }
+      }
       & > * {
         margin: auto;
       }
